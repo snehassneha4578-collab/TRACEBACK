@@ -159,5 +159,5 @@ Add carefully authored ECE cases and expand to other engineering subjects. Explo
 
 ## Open Questions
 
-- **Before build (resolve in `4-spec`):** Author and review the case's circuit values, supported base-bias settings and corresponding I_C/V_CE/operating-region outcomes, deterministic evidence criteria for each dependency, and the related-but-not-identical re-test prompt. These are content details for the one agreed case; the product behavior and status definitions are already set.
+- **Resolved in the approved `4-spec`:** The fixed circuit values and bias presets, corresponding I_C/V_CE/operating-region outcomes, deterministic dependency evidence criteria, and related-but-not-identical re-test prompt are defined in `spec.md > Case Model and Circuit Values`, `spec.md > Deterministic Reasoning Criteria`, and `spec.md > Diagnostic, Re-test, and Follow-up Content`.
 - **Can wait:** Whether a later version should add persistent history or advanced AI/ML scoring; both are deferred and do not affect this proof of concept.

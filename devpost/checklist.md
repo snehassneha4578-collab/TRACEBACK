@@ -19,7 +19,7 @@ Build mode: Fast
   Learner check: Open the lab, start the diagnostic, submit the authored example, and inspect whether each status follows from the cited statement and dependency. Try an empty or vague response and confirm it asks for more detail without diagnosing.
   Commit: `Build evidence-linked diagnostic trace`
 
-- [ ] **2. Complete the bias experiment, bounded re-test loop, verification, and session summary**
+- [x] **2. Complete the bias experiment, bounded re-test loop, verification, and session summary**
   Becomes usable: The student can change a controlled bias preset, observe Q-Point and region changes, explain the effect, re-test on the related case, and reach a repaired or unresolved summary with all session evidence preserved.
   Why now: The diagnostic from Slice 1 now drives the intervention target. This closes the entire locked concept-to-verification loop and lets us validate the two-re-test stopping rule against real state transitions.
   PRD ref: `prd.md > Targeted Micro-Experiment`, `prd.md > Re-test, Verification, and Session Summary`, `prd.md > States and Boundaries`, `prd.md > Screens and Layout`, `prd.md > Look and Feel`
@@ -32,22 +32,24 @@ Build mode: Fast
 ## Hands-on Checkpoints
 
 - [x] Early usable behavior explored — after Slice 1; learner reviewed the diagnostic and found no changes needed
-- [ ] Final kick-the-tires exploration and feedback completed — after Slice 2; learner tries repaired and unresolved paths, responsive layout, and awkward inputs
+- [x] Final kick-the-tires exploration and feedback completed — learner reviewed the app in a browser and requested focused landing-screen changes for repeated labels, CTA hierarchy, dependency count, gain-drop readability, footer weight, spacing, and responsive polish. Those changes were applied and the learner later approved Stage 5. The learner feedback record is limited to the browser review and requested changes; the repaired/unresolved journeys, empty/vague gates, and mobile widths were separately exercised in headless browser verification.
 
 ## Final Review
 
-- [ ] Final review complete — feedback resolved and learner confirms ready to ship
+- [x] Final review complete — the requested landing polish was applied without changing the diagnostic/session logic; lint, production build, headless learner journeys, and mobile overflow checks passed; learner explicitly approved Stage 5 Build.
+
+Review record: The learner identified repeated case labels, weak primary-action hierarchy, an unclear gain comparison, footer emphasis, and general spacing/responsive refinements from their browser review. These were addressed in the final landing screen. No product-scope or diagnostic-rule changes were made. The learner's explicit sign-off was: “Stage 5 Build is approved.”
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — focused investigation of how dependency evidence drives status and verification
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — brief, evidence-based reference recap of how the sufficiency gate, authored edge rules, and reducer transitions connect to the visible trace and verification; no learning outcome is inferred
+- [x] Optional edit and transfer reflection addressed — no additional code-tour edit was needed; one optional transfer question is offered in the Stage 5 handoff
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: [what actually happened; real document/test/code references; unfinished work if interrupted]
-Route and stops: [actual paths and symbols; guided stops completed, or reference-only route]
-Edit outcome: [tried/kept/reverted/declined/not applicable; verification if changed]
-Reflection: [offered/answered/declined/already covered — personal answer belongs only in the ignored profile]
-Activity mode: [live app and editor, explicit static fallback, focused alternative, prior practice, or recap]
+Activity and evidence: Brief evidence-based recap ties the approved requirement for evidence-linked explanations to `web/src/lib/diagnosis.ts` (`checkSufficiency`, `evaluateEdge`, `diagnoseReasoning`) and `web/src/lib/session.ts` (`sessionReducer`, `SUBMIT_INITIAL`, `SUBMIT_RETEST`). Prior headless browser verification covered empty/vague gates, initial trace, live preset readings, repaired and unresolved outcomes, focused follow-up, session trace preservation, and mobile overflow. No personal learning outcome is claimed.
+Route and stops: Reference-only route in `devpost/app-map.html`: `web/src/components/DiagnosticLab.tsx` (`DiagnosticLab`) → `web/src/lib/diagnosis.ts` and `web/src/lib/session.ts` (evidence gate/rules/state transitions) → `web/src/components/BiasExperiment.tsx`, `web/src/lib/circuitModel.ts`, and `web/src/components/SessionSummary.tsx` (intervention and result). This route was prepared, not recorded as an interactive learner tour.
+Edit outcome: Not applicable for the wrap-up; no extra learning edit was made. The separately requested landing-screen polish is part of the completed Slice 2 commit.
+Reflection: Optional transfer question offered in the Stage 5 handoff; response not yet recorded. Personal reflection remains in the ignored learner profile only if the learner chooses to add it.
+Activity mode: Brief evidence-based recap with a reference-only code route and standalone app map.
 
 ## Revisions

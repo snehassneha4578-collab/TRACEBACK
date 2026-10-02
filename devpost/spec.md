@@ -5,7 +5,7 @@ status: approved
 
 # TRACEBACK — Technical Spec
 
-**Review state: Ready for review.** The document remains `status: draft` until the learner approves it.
+**Review state: Approved.** This technical specification is approved and its frontmatter status is `approved`.
 
 ## Locked MVP Rules
 
@@ -53,14 +53,14 @@ PRD ref: `prd.md > The Core Journey`, `prd.md > Reasoning Trace and Gap Diagnosi
 
 ## Stack
 
-**Recommendation for learner agreement:** Next.js App Router with TypeScript, built as a client-side single-page lab. This uses the learner's reported Next.js and TypeScript experience. Next.js is more framework than a static React-only page needs, but it gives the app a familiar structure and a straightforward local demo; no Next.js server features, API routes, or server actions are needed. Use one plain CSS file for shared design tokens and app classes, plus native SVG for the graph and circuit, rather than adding a UI, chart, or diagram dependency.
+**Approved implementation stack:** Next.js App Router with TypeScript, built as a client-side single-page lab. This uses the learner's reported Next.js and TypeScript experience. Next.js is more framework than a static React-only page needs, but it gives the app a familiar structure and a straightforward local demo; no Next.js server features, API routes, or server actions are needed. Use one plain CSS file for shared design tokens and app classes, plus native SVG for the graph and circuit, rather than adding a UI, chart, or diagram dependency.
 
 - **Next.js 16.x App Router** — route and project structure. The current official docs describe the App Router and the official setup command. [App Router docs](https://nextjs.org/docs/app), [installation](https://nextjs.org/docs/app/getting-started/installation).
 - **React** — the interactive lab UI. Use the compatible React version installed by the official current `create-next-app` CLI. [React documentation](https://react.dev/learn).
 - **TypeScript** — the learner has used it; use the compatible version installed by the official scaffold and keep exact dependency versions in `web/package-lock.json`. [TypeScript handbook](https://www.typescriptlang.org/docs/).
 - **Node.js 20.9 or newer and npm** — required for the current Next.js line. [Next.js system requirements](https://nextjs.org/docs/app/getting-started/installation#system-requirements).
 
-Versions move over time. At this spec's date (2026-10-02), Next.js 16.3 and React 19.3 are current official releases; scaffold at build time with `create-next-app@latest` and keep the generated lockfile as the exact compatibility record. Do not upgrade dependencies mid-build without need. [Next.js 16.3](https://nextjs.org/blog), [React 19.3](https://react.dev/blog/2026/09/09/react-19-3).
+Versions move over time. The scaffold resolved to Next.js 16.3.8 and React 19.2.8; `web/package-lock.json` records the exact installed versions. Use that lockfile as the implementation source of truth and do not upgrade dependencies mid-build without need. The stack choice remains Next.js App Router, React, and TypeScript.
 
 ## Where It Runs and How Someone Tries It
 
@@ -114,7 +114,7 @@ PRD ref: `prd.md > Re-test, Verification, and Session Summary`.
 
 ## Case Model and Circuit Values
 
-**Proposed fixed educational model for review.** It is a predictable teaching aid, not a SPICE model or a claim about a particular transistor part. The case uses an NPN common-emitter stage with:
+**Approved fixed educational model.** It is a predictable teaching aid, not a SPICE model or a claim about a particular transistor part. The case uses an NPN common-emitter stage with:
 
 - Supply `VCC = 10 V`
 - Collector resistor `RC = 1.0 kΩ`
@@ -293,7 +293,7 @@ TRACEBACK/
 
 There are no runtime external services, calls, credentials, costs, or rate limits. The npm registry is needed to create/install the app dependencies; the app itself runs locally without a network connection. Use native SVG and CSS, not a chart package or hosted model.
 
-Primary references for the proposed stack and case model:
+Primary references for the stack and case model:
 
 - [Next.js App Router and setup](https://nextjs.org/docs/app/getting-started/installation)
 - [React documentation](https://react.dev/learn)
@@ -317,8 +317,9 @@ Primary references for the proposed stack and case model:
 ## Decisions and Open Issues
 
 - **Learner's fixed product decisions:** one transistor-amplifier case, five-node chain, deterministic evidence rules, exact initial diagnostic prompt, targeted experiment, two re-tests maximum, repaired/unresolved ending, and current-session-only state; no accounts, persistent history, arbitrary simulator, additional cases, or complex AI/ML scoring.
-- **Stack recommendation requiring learner agreement:** Next.js App Router + TypeScript, one client-side lab, CSS, and native SVG. Reason: familiar technologies and straightforward local demo. Tradeoff: more framework structure than a static React app needs. No backend is used.
-- **Proposed engineering assumptions requiring learner review:** fixed component values, idealized `VBE`, `VT`, and `VCE` thresholds; five base-bias presets; gain estimate and re-test/follow-up wording in this spec. These are explicitly educational assumptions, not a general transistor model.
-- **Multiple-gap rule for agreement:** show every diagnosed link, but target the first non-demonstrated dependency in path order so the intervention addresses the earliest missing prerequisite. Non-target gaps keep their statuses in the summary.
-- **Useful uncertainty and how to investigate it:** how to diagnose free-text reliably without claiming general language understanding. The agreed direction is explicit relationship rules and statement citations; unmatched wording stays Unverified. During build, manually inspect a small set of clear, incomplete, contradictory, and paraphrased sample responses against the rules and revise the authored cues before the demo.
-- **Before the build:** agree on the stack recommendation, circuit assumptions/presets and threshold, rule table, retest/follow-up wording, and first-gap targeting rule. If you change any proposed detail, keep the one-case boundary fixed.
+- **Approved implementation stack:** Next.js App Router + TypeScript, one client-side lab, CSS, and native SVG. No backend is used.
+- **Approved educational assumptions:** fixed component values, idealized `VBE`, `VT`, and `VCE` thresholds, five base-bias presets, gain estimate, and re-test/follow-up wording as authored above. These remain educational assumptions, not a general transistor model.
+- **First-gap targeting:** show every diagnosed link, but target the first non-demonstrated dependency in path order. Non-target gaps keep their statuses in the summary.
+- **Reasoning evaluator boundary:** explicit relationship rules and statement citations are used; unmatched wording stays Unverified. The browser verification exercised empty and vague inputs, an evidence-linked initial trace, a repaired re-test, a failed re-test with its focused follow-up, and an unresolved second re-test. This authored ruleset does not claim general paraphrase understanding.
+- **Open issue deferred beyond the MVP:** broader natural-language paraphrase coverage may be explored only in a future version; it does not affect this approved one-case implementation.
+- **Build decisions are closed:** the stack, circuit assumptions and presets, threshold, evidence rules, re-test/follow-up content, and first-gap targeting rule are approved in this specification and implemented within the one-case boundary.
