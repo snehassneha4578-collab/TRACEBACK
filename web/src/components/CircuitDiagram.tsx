@@ -1,4 +1,4 @@
-export default function CircuitDiagram({ compact = false }: { compact?: boolean }) {
+export default function CircuitDiagram({ compact = false, baseVoltage }: { compact?: boolean; baseVoltage?: number }) {
   return (
     <svg className={`circuit-svg ${compact ? "circuit-compact" : ""}`} viewBox="0 0 440 230" role="img" aria-labelledby="circuit-title circuit-desc">
       <title id="circuit-title">Simplified common-emitter transistor amplifier</title>
@@ -22,7 +22,7 @@ export default function CircuitDiagram({ compact = false }: { compact?: boolean 
         <text x="149" y="51">CE 100µF</text>
         <text x="260" y="182">RE 1kΩ</text>
         <text x="49" y="118">BASE BIAS</text>
-        <text x="60" y="162">VB</text>
+        <text x="60" y="162">VB {baseVoltage === undefined ? "ADJ" : `${baseVoltage.toFixed(2)}V`}</text>
         <text x="310" y="91">VC / VCE</text>
         <text x="133" y="114">NPN</text>
         <text x="200" y="218">COMMON-EMITTER STAGE</text>

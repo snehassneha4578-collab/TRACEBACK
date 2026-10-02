@@ -29,7 +29,7 @@ export type Diagnosis = {
 
 const patterns: Record<DependencyId, { relevant: RegExp; supports: RegExp[]; contradicts: RegExp[] }> = {
   "bias-qpoint": {
-    relevant: /\b(bias|base|collector current|\bIC\b|q[ -]?point|operating point)\b/i,
+    relevant: /\b(bias|base|q[ -]?point|operating point)\b/i,
     supports: [
       /\b(bias|base voltage)\b.{0,90}\b(change|shift|move|lower|decrease|reduce|increase|raise)\b.{0,70}\b(q[ -]?point|operating point|collector current|\bIC\b)\b/i,
       /\b(lower|decrease|reduce|increase|raise)\b.{0,35}\b(base bias|bias|base voltage)\b.{0,65}\b(collector current|\bIC\b|q[ -]?point|operating point)\b/i,
@@ -41,13 +41,14 @@ const patterns: Record<DependencyId, { relevant: RegExp; supports: RegExp[]; con
     ],
   },
   "qpoint-region": {
-    relevant: /\b(q[ -]?point|operating point|\bIC\b|\bVCE\b|operating region|forward.active|saturat\w*|cutoff)\b/i,
+    relevant: /\b(q[ -]?point|operating point|\bVCE\b|operating region|forward.active|saturat\w*|cutoff)\b/i,
     supports: [
       /\b(VCE|IC|q[ -]?point|operating point|DC readings?)\b.{0,100}\b(so|therefore|means|indicates|classif\w*|shows|because|above|below)\b.{0,90}\b(forward.active|active region|saturat\w*|cutoff)\b/i,
       /\b(forward.active|active region|saturat\w*|cutoff)\b.{0,100}\b(because|when|if|since|as)\b.{0,100}\b(VCE|IC|q[ -]?point|operating point|DC readings?)\b/i,
       /\bVCE\b.{0,30}(>|above|greater than|<=|≤|below|less than|0\.4).{0,60}\b(forward.active|active region|saturat\w*|cutoff)\b/i,
     ],
     contradicts: [
+      /\b(saturat\w*|cutoff)\b.{0,50}\bbecause\b.{0,30}\bVCE\b.{0,30}\b(high|large|above)\b/i,
       /\b(saturat\w*|cutoff)\b.{0,55}\b(because|since|when)\b.{0,55}\b(high|large|above|greater).{0,20}\bVCE\b/i,
       /\b(high|large|above|greater).{0,20}\bVCE\b.{0,55}\b(saturat\w*|cutoff)\b/i,
       /\bVCE\b.{0,40}(?:0\.4|≤|<=|below|less than).{0,50}\b(forward.active|active region)\b/i,
@@ -71,7 +72,7 @@ const patterns: Record<DependencyId, { relevant: RegExp; supports: RegExp[]; con
   "small-signal-gain": {
     relevant: /\b(small[ -]?signal|gain|collector current|\bIC\b|\bgm\b|\bVT\b|transconductance)\b/i,
     supports: [
-      /\b(lower|decrease|reduce|less)\b.{0,45}\b(collector current|\bIC\b)\b.{0,90}\b(lower|decrease|reduce|less)\b.{0,35}\b(gain|\bgm\b|transconductance)\b/i,
+      /\b(lower|decrease|reduce|less)(?:s|ed|ing)?\b.{0,45}\b(collector current|\bIC\b)\b.{0,90}\b(lower|decrease|reduce|less)(?:s|ed|ing)?\b.{0,35}\b(gain|\bgm\b|transconductance)\b/i,
       /\b(collector current|\bIC\b)\b.{0,80}\b(proportional|sets|determines|controls|affects)\b.{0,55}\b(gain|\bgm\b|transconductance)\b/i,
       /\b(gm|transconductance)\b.{0,55}\b(IC|collector current|VT)\b.{0,70}\b(gain|lower|reduc|decreas)\w*\b/i,
       /\blower IC\b.{0,40}\blower gm\b.{0,50}\b(lower|reduce|decrease)\w* gain\b/i,
@@ -103,8 +104,9 @@ export function checkSufficiency(rawText: string): { kind: "empty" | "insufficie
     return { kind: "empty", message: "Your explanation is too short to trace your reasoning. Add a few steps describing what you would check and why." };
   }
   const statements = splitStatements(rawText);
-  const hasCaseCue = /\b(amplifier|gain|transistor|collector|base|bias|current|VCE|Q[ -]?point|operating region|small[ -]?signal|gm)\b/i.test(rawText);
-  if (statements.length < 2 || !hasCaseCue) {
+  const hasCaseCue = /\b(bias|base|collector|current|\bIC\b|\bVCE\b|Q[ -]?point|operating point|operating region|forward.active|saturat\w*|cutoff|small[ -]?signal|\bgm\b|\bVT\b)\b/i.test(rawText);
+  const hasReasoningCue = /\b(check|measure|compare|estimate|calculate|because|if|then|so|therefore|means|change|move|shift|lower|increase|decrease|depend|cause|affect|lead|result|from|to)\w*\b/i.test(rawText);
+  if (statements.length < 2 || !hasCaseCue || !hasReasoningCue) {
     return {
       kind: "insufficient",
       message: "There is not enough reasoning evidence to trace your understanding yet. What would you check first, what would you expect to change, and how would that affect the amplifier?",
@@ -115,20 +117,28 @@ export function checkSufficiency(rawText: string): { kind: "empty" | "insufficie
 
 function evaluateEdge(dependencyId: DependencyId, statements: ReasoningStatement[]): EdgeDiagnosis {
   const rule = patterns[dependencyId];
-  const matching = statements.filter(({ text }) => rule.relevant.test(text));
-  const combined = statements.map(({ text }) => text).join(" ");
-  const impliedRegionConflict = dependencyId === "region-small-signal"
-    && /\b(saturat\w*|cutoff)\b/i.test(combined)
-    && /\b(small[ -]?signal|gain model)\b.{0,85}\b(still applies|still valid|applies even then)\b/i.test(combined);
-  const conflict = impliedRegionConflict || rule.contradicts.some((pattern) => pattern.test(combined));
-  const support = rule.supports.some((pattern) => pattern.test(combined));
+  const contexts = statements.map((statement, index) => ({
+    text: index < statements.length - 1 ? `${statement.text} ${statements[index + 1].text}` : statement.text,
+    indices: index < statements.length - 1 ? [index, index + 1] : [index],
+  }));
+  const supports = contexts.filter(({ text }) => rule.supports.some((pattern) => pattern.test(text)));
+  const impliedConflict = (context: string) => dependencyId === "region-small-signal"
+    && /\b(saturat\w*|cutoff)\b/i.test(context)
+    && /\b(small[ -]?signal|gain model)\b.{0,85}\b(still applies|still valid|applies even then)\b/i.test(context);
+  const conflicts = contexts.filter(({ text }) => impliedConflict(text)
+    || rule.contradicts.some((pattern) => pattern.test(text)));
+  const relevant = contexts.filter(({ indices }) => indices.some((index) => rule.relevant.test(statements[index].text)));
+  const conflict = conflicts.length > 0;
+  const support = supports.length > 0;
   let status: ReasoningStatus;
   if (conflict) status = "inconsistent";
   else if (support) status = "demonstrated";
-  else if (matching.length > 0) status = "incomplete";
+  else if (relevant.length > 0) status = "incomplete";
   else status = "unverified";
 
-  const evidence = matching.length ? matching : [];
+  const selectedContexts = conflict ? [...supports, ...conflicts] : support ? supports : relevant;
+  const evidenceIndices = [...new Set(selectedContexts.flatMap((context) => context.indices))];
+  const evidence = evidenceIndices.map((index) => statements[index]);
   return {
     dependencyId,
     status,
