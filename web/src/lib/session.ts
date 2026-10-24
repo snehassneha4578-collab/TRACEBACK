@@ -82,7 +82,7 @@ function deriveConceptStatuses(edges: Diagnosis["edges"]): Record<string, Reason
     bias: statusFor("bias-qpoint"),
     qpoint: statusFor("bias-qpoint"),
     region: statusFor("qpoint-region"),
-    model: statusFor("small-signal-gain"),
+    model: statusFor("region-small-signal"),
     gain: statusFor("small-signal-gain"),
   };
 }
