@@ -34,6 +34,7 @@ const patterns: Record<DependencyId, { relevant: RegExp; supports: RegExp[]; con
       /\b(bias|base voltage)\b.{0,90}\b(change|shift|move|lower|decrease|reduce|increase|raise)\b.{0,70}\b(q[ -]?point|operating point|collector current|\bIC\b)\b/i,
       /\b(lower|decrease|reduce|increase|raise)\b.{0,35}\b(base bias|bias|base voltage)\b.{0,65}\b(collector current|\bIC\b|q[ -]?point|operating point)\b/i,
       /\b(changing|change in)\b.{0,20}\bbias\b.{0,45}\b(moves|changes|shifts)\b.{0,20}\b(q[ -]?point|operating point)\b/i,
+      /\b(bias|base voltage)\b.{0,100}\b(change|shift|move|lower|decrease|reduce|increase|raise|affect)\w*\b.{0,100}\b(base current|collector current|\bIC\b)\b.{0,100}\b(q[ -]?point|operating point)\b/i,
     ],
     contradicts: [
       /\b(lower|decrease|reduce)\b.{0,35}\b(bias|base voltage)\b.{0,55}\b(increase|raise)\b.{0,25}\b(collector current|\bIC\b)\b/i,
@@ -45,14 +46,14 @@ const patterns: Record<DependencyId, { relevant: RegExp; supports: RegExp[]; con
     supports: [
       /\b(VCE|IC|q[ -]?point|operating point|DC readings?)\b.{0,100}\b(so|therefore|means|indicates|classif\w*|shows|because|above|below)\b.{0,90}\b(forward.active|active region|saturat\w*|cutoff)\b/i,
       /\b(forward.active|active region|saturat\w*|cutoff)\b.{0,100}\b(because|when|if|since|as)\b.{0,100}\b(VCE|IC|q[ -]?point|operating point|DC readings?)\b/i,
-      /\bVCE\b.{0,30}(>|above|greater than|<=|≤|below|less than|0\.4).{0,60}\b(forward.active|active region|saturat\w*|cutoff)\b/i,
+      /\bVCE\b.{0,30}(>|above|greater than|<=|\u2264|below|less than|0\.4).{0,60}\b(forward.active|active region|saturat\w*|cutoff)\b/i,
     ],
     contradicts: [
       /\b(saturat\w*|cutoff)\b.{0,50}\bbecause\b.{0,30}\bVCE\b.{0,30}\b(high|large|above)\b/i,
       /\b(saturat\w*|cutoff)\b.{0,55}\b(because|since|when)\b.{0,55}\b(high|large|above|greater).{0,20}\bVCE\b/i,
       /\b(high|large|above|greater).{0,20}\bVCE\b.{0,55}\b(saturat\w*|cutoff)\b/i,
-      /\bVCE\b.{0,40}(?:0\.4|≤|<=|below|less than).{0,50}\b(forward.active|active region)\b/i,
-      /\bVCE\b.{0,40}(?:>|above|greater than|8\.|9\.).{0,50}\b(saturat\w*|cutoff)\b/i,
+      /\bVCE\b.{0,40}(?:0\.4|\u2264|<=|below|less than).{0,50}\b(forward.active|active region)\b/i,
+      /\bVCE\b.{0,40}(?:>|above|greater than|8\.|9\.).{0,50}\b(saturat\w*|cutoff)\b(?!\s+(?:voltage|threshold))/i,
     ],
   },
   "region-small-signal": {
@@ -64,7 +65,7 @@ const patterns: Record<DependencyId, { relevant: RegExp; supports: RegExp[]; con
       /\b(model|small[ -]?signal|gain estimate)\b.{0,80}\b(not valid|invalid|cannot|can't|does not apply|not appropriate)\b.{0,70}\b(saturat\w*|cutoff)\b/i,
     ],
     contradicts: [
-      /\b(saturat\w*|cutoff|even then|outside (?:the )?active region)\b.{0,80}\b(model|small[ -]?signal|gain estimate)\b.{0,40}\b(still|valid|appl\w*|appropriate|can use)\b/i,
+      /\b(saturat\w*|cutoff|even then|outside (?:the )?active region)\b.{0,80}\b(model|small[ -]?signal|gain estimate)\b.{0,40}\b(still|always)\b.{0,25}\b(valid|appl\w*|appropriate|can use)\b/i,
       /\b(model|small[ -]?signal|gain estimate)\b.{0,80}\b(still valid|always valid|applies everywhere|works in any region)\b/i,
       /\b(forward.active|active region)\b.{0,80}\b(model|small[ -]?signal|gain estimate)\b.{0,50}\b(not valid|invalid|cannot|does not apply)\b/i,
     ],
@@ -94,7 +95,9 @@ const statusOrder: Record<ReasoningStatus, number> = {
 export function splitStatements(rawText: string): ReasoningStatement[] {
   return rawText
     .split(/\r?\n/)
-    .map((text) => text.trim().replace(/^\s*(?:\d+\s*[.)-]|[-*•])\s*/, "").trim())
+    .map((text) => text.trim())
+    .filter((text) => text.length > 0 && !/^\d+\s*[.)-]?\s*$/.test(text))
+    .map((text) => text.replace(/^\s*(?:\d+\s*[.)-]|[-*\u2022])\s*/, "").trim())
     .filter(Boolean)
     .map((text, index) => ({ id: `s${index + 1}`, text }));
 }
@@ -122,9 +125,28 @@ function evaluateEdge(dependencyId: DependencyId, statements: ReasoningStatement
     indices: index < statements.length - 1 ? [index, index + 1] : [index],
   }));
   const supports = contexts.filter(({ text }) => rule.supports.some((pattern) => pattern.test(text)));
-  const impliedConflict = (context: string) => dependencyId === "region-small-signal"
-    && /\b(saturat\w*|cutoff)\b/i.test(context)
-    && /\b(small[ -]?signal|gain model)\b.{0,85}\b(still applies|still valid|applies even then)\b/i.test(context);
+  const impliedConflict = (context: string) => {
+    if (dependencyId !== "region-small-signal") return false;
+
+    const hasInvalidRegion = /\b(cutoff|saturat\w*\b(?!\s+(?:voltage|threshold)))\b/i.test(context);
+    const hasActiveRegion = /\b(forward.active|active region)\b/i.test(context);
+    const hasModel = /\b(small[ -]?signal|gain model)\b/i.test(context);
+    const incorrectlyValidatesInvalidRegion =
+      /\b(saturat\w*|cutoff)\b.{0,85}\b(model|small[ -]?signal|gain estimate)\b.{0,45}\b(still applies|still valid|applies even then|valid|appropriate|can use)\b/i.test(context)
+      || /\b(model|small[ -]?signal|gain estimate)\b.{0,85}\b(still valid|always valid|applies everywhere|works in any region)\b/i.test(context);
+
+    const explicitlyRejectsModel =
+      /\b(model|small[ -]?signal|gain estimate)\b.{0,45}\b(not valid|invalid|cannot|can't|does not apply|not appropriate)\b.{0,45}\b(saturat\w*|cutoff)\b/i.test(context)
+      || /\b(saturat\w*|cutoff)\b.{0,45}\b(model|small[ -]?signal|gain estimate)\b.{0,45}\b(not valid|invalid|cannot|can't|does not apply|not appropriate)\b/i.test(context);
+
+    if (!hasInvalidRegion || !hasModel) return false;
+
+    // Do not flag correct reasoning that explicitly distinguishes
+    // forward-active operation from cutoff/saturation.
+    if (hasActiveRegion && !incorrectlyValidatesInvalidRegion) return false;
+
+    return incorrectlyValidatesInvalidRegion && !explicitlyRejectsModel;
+  };
   const conflicts = contexts.filter(({ text }) => impliedConflict(text)
     || rule.contradicts.some((pattern) => pattern.test(text)));
   const relevant = contexts.filter(({ indices }) => indices.some((index) => rule.relevant.test(statements[index].text)));
